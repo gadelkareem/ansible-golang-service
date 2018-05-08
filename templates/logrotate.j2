@@ -1,0 +1,10 @@
+/var/log/{{service_name}}/*.log {
+	rotate 12
+	daily
+	missingok
+	notifempty
+	copytruncate
+	delaycompress
+	compress
+	maxage 7
+}

@@ -1,0 +1,40 @@
+
+- set_fact:
+    service_name: myservice
+    base_path: /var/myapp
+
+- name: Golang Service | Adding service user
+  user:
+    name: "{{service_name}}"
+    groups: www-data
+    append: yes
+
+- name: Golang Service | Copy {{service_name}} service
+  template:
+    src: "service.j2"
+    dest: "/lib/systemd/system/{{service_name}}.service"
+    owner: "{{service_name}}"
+    group: www-data
+    mode: 0755
+
+- name: Golang Service | Copy {{service_name}} rsyslog
+  template:
+    src: "rsyslog.conf.j2"
+    dest: "/etc/rsyslog.d/30-{{service_name}}.conf"
+
+- name: Golang Service | Restart rsyslog
+  service: name=rsyslog state=restarted
+
+- name: Golang Service | Enable {{service_name}} service
+  systemd:
+    name: "{{service_name}}"
+    enabled: yes
+    masked: no
+    daemon_reload: yes
+    state: restarted
+
+- name: Golang Service | Make sure daemon is reloaded (ansible bug)
+  shell: systemctl daemon-reload
+
+- name: Golang Service | Add {{service_name}} logs to logrotate.d
+  template: src=logrotate.j2 dest=/etc/logrotate.d/{{service_name}}
